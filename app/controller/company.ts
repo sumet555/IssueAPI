@@ -1,6 +1,10 @@
 import  {Router,Request,Response} from 'express';
 import { MongoClient,ObjectID } from 'mongodb';
 
+import * as myConfig from 'config';
+let config:any = myConfig.get('Config');
+console.log( config.mongodbUrl );
+
 
 const router:Router=Router();
 var mongodb;
@@ -83,7 +87,7 @@ router.put('/:id',  (req:Request, res:Response) => {
     });
 });
 
-MongoClient.connect("mongodb://localhost:27017/issuedb", (err, db) => {
+MongoClient.connect(config.mongodbUrl, (err, db) => {
 
     if (err) {
         console.log(err);

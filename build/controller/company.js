@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var mongodb_1 = require("mongodb");
+var myConfig = require("config");
+var config = myConfig.get('Config');
+console.log(config.mongodbUrl);
 var router = express_1.Router();
 var mongodb;
 router.get('/', function (req, res) {
@@ -74,7 +77,7 @@ router.put('/:id', function (req, res) {
         res.json(data);
     });
 });
-mongodb_1.MongoClient.connect("mongodb://localhost:27017/issuedb", function (err, db) {
+mongodb_1.MongoClient.connect(config.mongodbUrl, function (err, db) {
     if (err) {
         console.log(err);
     }
