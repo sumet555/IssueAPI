@@ -1,41 +1,32 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var express_1 = require("express");
 var mongodb_1 = require("mongodb");
+var mongodb_2 = require("../helpers/mongodb");
 var router = express_1.Router();
-var mongodb;
-// router.get('/company',  (req:Request, res:Response) => {
-//     mongodb.collection("company").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
-// router.get('/customer',  (req:Request, res:Response) => {
-//     mongodb.collection("customer").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
-// router.get('/user',  (req:Request, res:Response) => {
-//     mongodb.collection("user").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
+//var mongodb;
 router.get('/', function (req, res) {
-    mongodb.collection("issue").find().toArray().then(function (data) {
+    mongodb_2.mongodb.collection("user").find().toArray().then(function (data) {
+        res.json(data);
+    });
+});
+router.get('/usertype', function (req, res) {
+    mongodb_2.mongodb.collection("usertype").find().toArray().then(function (data) {
         res.json(data);
     });
 });
 //get value by _id
 router.get('/findByID/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
-    mongodb.collection("issue").findOne({ _id: id })
+    mongodb_2.mongodb.collection("user").findOne({ _id: id })
         .then(function (data) {
         res.json(data);
     });
 });
 //get value by _id
-router.get('/:id', function (req, res) {
+router.get('/usertype/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
-    mongodb.collection("issue").findOne({ _id: id })
+    mongodb_2.mongodb.collection("usertype").findOne({ _id: id })
         .then(function (data) {
         res.json(data);
     });
@@ -44,8 +35,7 @@ router.post('/', function (req, res) {
     //ข้อมูลที่ได้มากจากการ post จะเป็น req.body
     //insert into mongodb from post in postman
     var data = req.body;
-    mongodb.collection("issue").insert(data).then(function (data) {
-        console.dir(data);
+    mongodb_2.mongodb.collection("user").insertOne(data).then(function (data) {
         res.json(data);
     });
     //res.json(req.body);
@@ -59,14 +49,14 @@ router.post('/search', function (req, res) {
         total: Number
     };
     var data = req.body;
-    mongodb.collection("issue").find({
-        title: new RegExp("" + data.searchText)
+    mongodb_2.mongodb.collection("user").find({
+        username: new RegExp("" + data.searchText)
     }).skip(data.numPage * data.rowPerPage)
         .limit(data.rowPerPage)
         .toArray().then(function (datas) {
         ret.row = datas;
-        mongodb.collection("issue").find({
-            title: new RegExp("" + data.searchText)
+        mongodb_2.mongodb.collection("user").find({
+            username: new RegExp("" + data.searchText)
         }).count().then(function (num) {
             ret.total = num;
             res.json(ret);
@@ -76,11 +66,11 @@ router.post('/search', function (req, res) {
 });
 //delete
 ///:id คือ parameter ที่รับเข้ามา ในรูปแบบของ url
-router.delete('/:id', function (req, res) {
+router["delete"]('/:id', function (req, res) {
     // req.params.id คือ parameter ที่ได้ ObjectID คือ _id จาก mongodb
     // ถ้าเป็น ฟิล ธรรมดา ไม่ต้องใช้ ObjectID แค่เปลี่ยน _id เป็น ชื่อฟิล เลย
     var id = new mongodb_1.ObjectID(req.params.id);
-    mongodb.collection("issue").deleteOne({ _id: id }).then(function (data) {
+    mongodb_2.mongodb.collection("user").deleteOne({ _id: id }).then(function (data) {
         res.json(data);
     });
 });
@@ -88,17 +78,16 @@ router.delete('/:id', function (req, res) {
 router.put('/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
     var data = req.body;
-    mongodb.collection("issue").updateOne({ _id: id }, data).then(function (data) {
+    mongodb_2.mongodb.collection("user").updateOne({ _id: id }, data).then(function (data) {
         res.json(data);
     });
 });
-mongodb_1.MongoClient.connect("mongodb://localhost:27017/issuedb", function (err, db) {
-    if (err) {
-        console.log(err);
-    }
-    else {
-        mongodb = db;
-    }
-});
-exports.IssueController = router;
-//# sourceMappingURL=F:/work/Train_JS/IssueAPI/controller/issue.js.map
+// MongoClient.connect("mongodb://localhost:27017/issuedb", (err, db) => {
+//     if (err) {
+//         console.log(err);
+//     }
+//     else {
+//         mongodb = db;
+//     }
+// });
+exports.UserController = router;

@@ -49,7 +49,8 @@ router.post('/',  (req:Request, res:Response) => {
     //ข้อมูลที่ได้มากจากการ post จะเป็น req.body
     //insert into mongodb from post in postman
     let data=req.body;
-    mongodb.collection("issue").insertOne(data).then((data)=>{
+    mongodb.collection("issue").insert(data).then((data)=>{
+        console.dir(data);
         res.json(data);
     });
     //res.json(req.body);

@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var express = require("express");
 var company_1 = require("./controller/company");
 var user_1 = require("./controller/user");
@@ -29,4 +29,3 @@ app.listen(port, function () {
     //Success callback
     console.log("Listening at http://localhost:" + port + "/");
 });
-//# sourceMappingURL=F:/work/Train_JS/IssueAPI/server.js.map

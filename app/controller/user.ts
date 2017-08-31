@@ -1,8 +1,40 @@
 import {Router,Request,Response} from 'express';
 import {MongoClient,ObjectID} from 'mongodb';
+import { mongodb } from '../helpers/mongodb';
+import * as multer from 'multer';
+import * as myConfig from 'config';
+var fs=require('fs');
 
 const router:Router=Router();
-var mongodb;
+//var mongodb;
+let config:any=myConfig.get('Config');
+
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, config.uploadPath);
+    },
+    filename: function (req, file, cb) {
+        cb(null, req.params.id);
+    }
+})
+
+var upload = multer({ storage: storage });
+
+router.post('/profile/:id', upload.single('avatar'), (req: Request, res: Response) => {
+    console.log(req.body);
+    res.json({success:true});
+});
+
+router.get('/profile/:id', (req: Request, res: Response) => {
+    fs.readFile(`${config.uploadPath}/${req.params.id}`, (err, data) => {
+        if (!err) {
+            res.write(data);
+            res.end();
+        } else {
+            res.end();
+        }
+    });
+});
 
 router.get('/',  (req:Request, res:Response) => {
     mongodb.collection("user").find().toArray().then((data)=> {
@@ -38,7 +70,8 @@ router.post('/',  (req:Request, res:Response) => {
     //ข้อมูลที่ได้มากจากการ post จะเป็น req.body
     //insert into mongodb from post in postman
     let data=req.body;
-    mongodb.collection("user").insertOne(data).then((data)=>{
+    mongodb.collection("user").insert(data).then((data)=>{
+        console.dir(data);
         res.json(data);
     });
     //res.json(req.body);
@@ -54,13 +87,13 @@ router.post('/search',  (req:Request, res:Response) => {
     };
     let data=req.body;
     mongodb.collection("user").find({
-        username: new RegExp(`${data.searchText}`)
+        firstName: new RegExp(`${data.searchText}`)
     }).skip(data.numPage*data.rowPerPage)
     .limit(data.rowPerPage)
     .toArray().then((datas)=>{
         ret.row=datas;
         mongodb.collection("user").find({
-        username: new RegExp(`${data.searchText}`)
+        firstName: new RegExp(`${data.searchText}`)
     }).count().then((num)=>{
                 ret.total=num; 
                 res.json(ret);
@@ -91,14 +124,5 @@ router.put('/:id',  (req:Request, res:Response) => {
     });
 });
 
-MongoClient.connect("mongodb://localhost:27017/issuedb", (err, db) => {
 
-    if (err) {
-        console.log(err);
-    }
-    else {
-        mongodb = db;
-
-    }
-});
 export const UserController:Router=router;

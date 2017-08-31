@@ -1,8 +1,10 @@
 import  {Router,Request,Response} from 'express';
 import { MongoClient,ObjectID } from 'mongodb';
-
+import { mongodb } from '../helpers/mongodb';
+import * as auth from '../helpers/auth';
+import * as async from 'async';
 const router:Router=Router();
-var mongodb;
+router.use(auth.authenticate());
 
 router.get('/',  (req:Request, res:Response) => {
     mongodb.collection("customer").find().toArray().then((data)=> {
@@ -53,6 +55,43 @@ router.post('/search',  (req:Request, res:Response) => {
     });
     //res.json(req.body);
 });
+router.post('/find', (req: Request, res: Response) => {
+    let ret = {
+        row: [],
+        total: Number
+    };
+    let data = req.body;
+    async.parallel([
+        function (callback) {
+            mongodb.collection("customer").find({
+                compName: new RegExp(`${data.searchText}`)
+            }).skip(data.numPage * data.rowPerPage)
+                .limit(data.rowPerPage)
+                .toArray().then((datas) => {
+                    callback(null, datas);
+                });
+        },
+        function (callback) {
+            mongodb.collection("customer").find(
+                {
+                    compName: new RegExp(`${data.searchText}`)
+                }
+            ).count().then((num) => {
+                callback(null, num);
+            });
+        }
+    ],
+        // optional callback
+        function (err, results) {
+            let ret = {
+                row: [],
+                total: Number
+            };
+            ret.row = results[0];
+            ret.total = results[1];
+            res.json(ret);
+        });
+});
 router.delete('/:id',  (req:Request, res:Response) => {
     let id=new ObjectID(req.params.id);
     mongodb.collection("customer").deleteOne({_id : id}).then((data)=>{
@@ -68,14 +107,5 @@ router.put('/:id',  (req:Request, res:Response) => {
      });
  });
 
- MongoClient.connect("mongodb://localhost:27017/issuedb", (err, db) => {
-    
-        if (err) {
-            console.log(err);
-        }
-        else {
-            mongodb = db;
-    
-        }
-    });
+
 export const CustomerController:Router=router;

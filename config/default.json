@@ -1,5 +1,12 @@
 {
 	"Config": {
-		"mongodbUrl":"mongodb://localhost:27017/issuedb"
+        "auth":{
+            "jwtSecret":"MySJcr3ck3Y",
+            "jwtSession":{
+                "session":false
+            }
+        },
+        "mongodbUrl":"mongodb://localhost:27017/issuedb",
+        "uploadPath":"f://upload/"
 	}
 }

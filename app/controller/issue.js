@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var express_1 = require("express");
 var mongodb_1 = require("mongodb");
 var router = express_1.Router();
@@ -44,8 +44,7 @@ router.post('/', function (req, res) {
     //ข้อมูลที่ได้มากจากการ post จะเป็น req.body
     //insert into mongodb from post in postman
     var data = req.body;
-    mongodb.collection("issue").insert(data).then(function (data) {
-        console.dir(data);
+    mongodb.collection("issue").insertOne(data).then(function (data) {
         res.json(data);
     });
     //res.json(req.body);
@@ -76,7 +75,7 @@ router.post('/search', function (req, res) {
 });
 //delete
 ///:id คือ parameter ที่รับเข้ามา ในรูปแบบของ url
-router.delete('/:id', function (req, res) {
+router["delete"]('/:id', function (req, res) {
     // req.params.id คือ parameter ที่ได้ ObjectID คือ _id จาก mongodb
     // ถ้าเป็น ฟิล ธรรมดา ไม่ต้องใช้ ObjectID แค่เปลี่ยน _id เป็น ชื่อฟิล เลย
     var id = new mongodb_1.ObjectID(req.params.id);
@@ -101,4 +100,3 @@ mongodb_1.MongoClient.connect("mongodb://localhost:27017/issuedb", function (err
     }
 });
 exports.IssueController = router;
-//# sourceMappingURL=F:/work/Train_JS/IssueAPI/controller/issue.js.map

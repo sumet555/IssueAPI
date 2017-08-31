@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var express_1 = require("express");
 var mongodb_1 = require("mongodb");
 var mongodb_2 = require("../helpers/mongodb");
@@ -85,7 +85,7 @@ router.post('/find', function (req, res) {
         res.json(ret);
     });
 });
-router.delete('/:id', function (req, res) {
+router["delete"]('/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
     mongodb_2.mongodb.collection("customer").deleteOne({ _id: id }).then(function (data) {
         res.json(data);
@@ -99,4 +99,3 @@ router.put('/:id', function (req, res) {
     });
 });
 exports.CustomerController = router;
-//# sourceMappingURL=F:/work/Train_JS/IssueAPI/controller/customer.js.map
