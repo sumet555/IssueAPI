@@ -1,5 +1,5 @@
 import * as express from 'express';
-import {CompanyController} from './controller/company';
+import {CompanyController} from './controller/postgres/company';
 import {UserController} from './controller/user';
 import {CustomerController} from './controller/customer';
 import {IssueController} from './controller/issue';
@@ -7,6 +7,7 @@ import {LoginController} from './controller/login';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as auth from './helpers/auth';
+
 
 
 

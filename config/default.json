@@ -7,6 +7,17 @@
             }
         },
         "mongodbUrl":"mongodb://localhost:27017/issuedb",
-        "uploadPath":"f://upload/"
+        "postgresUrl": "postgres://isadmin:isadmin@localhost:5432/issue",
+        "uploadPath":"f://upload/",
+        "smtp":{
+            "host":"smtp.gmail.com",
+            "port":465,
+            "secure":true,
+            "auth":{
+                "user":"activex.cpe@gmail.com",
+                "pass":"0847827985"
+            }
+        }
+    
 	}
 }

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var express = require("express");
-var company_1 = require("./controller/company");
+var company_1 = require("./controller/postgres/company");
 var user_1 = require("./controller/user");
 var customer_1 = require("./controller/customer");
 var issue_1 = require("./controller/issue");

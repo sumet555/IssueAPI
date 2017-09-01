@@ -1,26 +1,32 @@
 import {Router,Request,Response} from 'express';
 import {MongoClient,ObjectID} from 'mongodb';
-
+import { mongodb } from '../helpers/mongodb';
+import * as multer from 'multer';
+import * as myConfig from 'config';
+import * as fs from 'fs';
+import * as shortid from 'shortid';
+//var fs=require('fs');
 const router:Router=Router();
-var mongodb;
+let config:any=myConfig.get('Config');
+//var mongodb;
+var mailer = require("nodemailer");
+var smtpTransport = mailer.createTransport(config.smtp);
 
-// router.get('/company',  (req:Request, res:Response) => {
-//     mongodb.collection("company").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
 
-// router.get('/customer',  (req:Request, res:Response) => {
-//     mongodb.collection("customer").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        let folder=config.uploadPath+req.params.folderName;
+        if(!fs.existsSync(folder)) //exitsSync จะทำแบบ sync แบบ exists จะเป็นแบบ async
+        {
+            fs.mkdirSync(folder);
+        }
+        cb(null, folder);
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+})
 
-// router.get('/user',  (req:Request, res:Response) => {
-//     mongodb.collection("user").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
 router.get('/',  (req:Request, res:Response) => {
     mongodb.collection("issue").find().toArray().then((data)=> {
         res.json(data);
@@ -49,9 +55,26 @@ router.post('/',  (req:Request, res:Response) => {
     //ข้อมูลที่ได้มากจากการ post จะเป็น req.body
     //insert into mongodb from post in postman
     let data=req.body;
+    
     mongodb.collection("issue").insert(data).then((data)=>{
-        console.dir(data);
-        res.json(data);
+        var mail = {
+            to : 'sumetbai@metrosystems.co.th',
+            subject: `your issue no : ${req.body.issueno}`,
+            html: `
+                    <h4> your issue no : ${req.body.issueno} </h4>
+                    <b>thanks</b>
+                `
+          }
+          smtpTransport.sendMail(mail, function(error, response){
+            smtpTransport.close();
+            if(error){
+                res.json(error);
+            }else{
+                res.json(data);
+            }
+          });
+        // console.dir(data);
+        //res.json(data);
     });
     //res.json(req.body);
 });
@@ -102,15 +125,38 @@ router.put('/:id',  (req:Request, res:Response) => {
         res.json(data);
     });
 });
-
-MongoClient.connect("mongodb://localhost:27017/issuedb", (err, db) => {
-
-    if (err) {
-        console.log(err);
+var upload = multer({ storage: storage });
+router.post('/attach/:folderName',upload.single('attach'),(req:Request,res:Response)=>{
+    res.json({
+        success:true
+    })
+});
+router.get('/attach/:folderName',(req:Request,res:Response)=>{
+    let folder=config.uploadPath+req.params.folderName
+    if(!fs.existsSync(folder)) //exitsSync จะทำแบบ sync แบบ exists จะเป็นแบบ async
+        {
+            fs.mkdirSync(folder);
+        }
+      
+    fs.readdir(folder,(err,files)=>{
+        res.json(files);
+    });
+})
+router.get('/attach/:folderName/:fileName', (req: Request, res: Response) => {
+    fs.readFile(`${config.uploadPath}/${req.params.folderName}/${req.params.fileName}`, (err, data) => {
+        if (!err) {
+            res.write(data);
+            res.end();
+        } else {
+            res.end();
+        }
+    });
+});
+router.get('/attach/delete/:folderName/:fileName', (req: Request, res: Response) => {
+    fs.unlink(`${config.uploadPath}/${req.params.folderName}/${req.params.fileName}`,(data)=>{
+           res.json(data);
+            res.end();
     }
-    else {
-        mongodb = db;
-
-    }
+    );
 });
 export const IssueController:Router=router;

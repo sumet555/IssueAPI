@@ -2,32 +2,37 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var mongodb_1 = require("mongodb");
+var mongodb_2 = require("../helpers/mongodb");
+var multer = require("multer");
+var myConfig = require("config");
+var fs = require("fs");
+//var fs=require('fs');
 var router = express_1.Router();
-var mongodb;
-// router.get('/company',  (req:Request, res:Response) => {
-//     mongodb.collection("company").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
-// router.get('/customer',  (req:Request, res:Response) => {
-//     mongodb.collection("customer").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
-// router.get('/user',  (req:Request, res:Response) => {
-//     mongodb.collection("user").find().toArray().then((data)=> {
-//         res.json(data);
-//     });
-// });
+var config = myConfig.get('Config');
+//var mongodb;
+var mailer = require("nodemailer");
+var smtpTransport = mailer.createTransport(config.smtp);
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        var folder = config.uploadPath + req.params.folderName;
+        if (!fs.existsSync(folder)) {
+            fs.mkdirSync(folder);
+        }
+        cb(null, folder);
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
 router.get('/', function (req, res) {
-    mongodb.collection("issue").find().toArray().then(function (data) {
+    mongodb_2.mongodb.collection("issue").find().toArray().then(function (data) {
         res.json(data);
     });
 });
 //get value by _id
 router.get('/findByID/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
-    mongodb.collection("issue").findOne({ _id: id })
+    mongodb_2.mongodb.collection("issue").findOne({ _id: id })
         .then(function (data) {
         res.json(data);
     });
@@ -35,7 +40,7 @@ router.get('/findByID/:id', function (req, res) {
 //get value by _id
 router.get('/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
-    mongodb.collection("issue").findOne({ _id: id })
+    mongodb_2.mongodb.collection("issue").findOne({ _id: id })
         .then(function (data) {
         res.json(data);
     });
@@ -44,9 +49,23 @@ router.post('/', function (req, res) {
     //ข้อมูลที่ได้มากจากการ post จะเป็น req.body
     //insert into mongodb from post in postman
     var data = req.body;
-    mongodb.collection("issue").insert(data).then(function (data) {
-        console.dir(data);
-        res.json(data);
+    mongodb_2.mongodb.collection("issue").insert(data).then(function (data) {
+        var mail = {
+            to: 'sumetbai@metrosystems.co.th',
+            subject: "your issue no : " + req.body.issueno,
+            html: "\n                    <h4> your issue no : " + req.body.issueno + " </h4>\n                    <b>thanks</b>\n                "
+        };
+        smtpTransport.sendMail(mail, function (error, response) {
+            smtpTransport.close();
+            if (error) {
+                res.json(error);
+            }
+            else {
+                res.json(data);
+            }
+        });
+        // console.dir(data);
+        //res.json(data);
     });
     //res.json(req.body);
 });
@@ -59,13 +78,13 @@ router.post('/search', function (req, res) {
         total: Number
     };
     var data = req.body;
-    mongodb.collection("issue").find({
+    mongodb_2.mongodb.collection("issue").find({
         title: new RegExp("" + data.searchText)
     }).skip(data.numPage * data.rowPerPage)
         .limit(data.rowPerPage)
         .toArray().then(function (datas) {
         ret.row = datas;
-        mongodb.collection("issue").find({
+        mongodb_2.mongodb.collection("issue").find({
             title: new RegExp("" + data.searchText)
         }).count().then(function (num) {
             ret.total = num;
@@ -80,7 +99,7 @@ router.delete('/:id', function (req, res) {
     // req.params.id คือ parameter ที่ได้ ObjectID คือ _id จาก mongodb
     // ถ้าเป็น ฟิล ธรรมดา ไม่ต้องใช้ ObjectID แค่เปลี่ยน _id เป็น ชื่อฟิล เลย
     var id = new mongodb_1.ObjectID(req.params.id);
-    mongodb.collection("issue").deleteOne({ _id: id }).then(function (data) {
+    mongodb_2.mongodb.collection("issue").deleteOne({ _id: id }).then(function (data) {
         res.json(data);
     });
 });
@@ -88,17 +107,41 @@ router.delete('/:id', function (req, res) {
 router.put('/:id', function (req, res) {
     var id = new mongodb_1.ObjectID(req.params.id);
     var data = req.body;
-    mongodb.collection("issue").updateOne({ _id: id }, data).then(function (data) {
+    mongodb_2.mongodb.collection("issue").updateOne({ _id: id }, data).then(function (data) {
         res.json(data);
     });
 });
-mongodb_1.MongoClient.connect("mongodb://localhost:27017/issuedb", function (err, db) {
-    if (err) {
-        console.log(err);
+var upload = multer({ storage: storage });
+router.post('/attach/:folderName', upload.single('attach'), function (req, res) {
+    res.json({
+        success: true
+    });
+});
+router.get('/attach/:folderName', function (req, res) {
+    var folder = config.uploadPath + req.params.folderName;
+    if (!fs.existsSync(folder)) {
+        fs.mkdirSync(folder);
     }
-    else {
-        mongodb = db;
-    }
+    fs.readdir(folder, function (err, files) {
+        res.json(files);
+    });
+});
+router.get('/attach/:folderName/:fileName', function (req, res) {
+    fs.readFile(config.uploadPath + "/" + req.params.folderName + "/" + req.params.fileName, function (err, data) {
+        if (!err) {
+            res.write(data);
+            res.end();
+        }
+        else {
+            res.end();
+        }
+    });
+});
+router.get('/attach/delete/:folderName/:fileName', function (req, res) {
+    fs.unlink(config.uploadPath + "/" + req.params.folderName + "/" + req.params.fileName, function (data) {
+        res.json(data);
+        res.end();
+    });
 });
 exports.IssueController = router;
 //# sourceMappingURL=F:/work/Train_JS/IssueAPI/controller/issue.js.map
